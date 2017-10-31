@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { getAccountFromWIFKey, getScriptHashFromAddress } from './wallet'
+import { getAccountFromWIFKey, getScriptHashFromAddress, getAccountFromPublicKey, getPublicKeyEncoded } from './wallet'
 import * as tx from './transactions/index.js'
 import { hexstring2ab, ab2str } from './utils'
 
@@ -52,18 +52,27 @@ export const allAssetIds = [neoId, gasId]
 /**
  * Perform a ClaimTransaction for all available GAS
  * @param {string} net - 'MainNet' or 'TestNet'.
- * @param {string} fromWif - WIF key of address you are claiming from.
+ * @param {string} from - WIF key of address you are claiming from or public key for hardware wallets.
+ * @param {function} signingFunction - async signing function for hardware wallets.
  * @return {Promise<Response>} RPC response from sending transaction
  */
-export const doClaimAllGas = (net, fromWif) => {
-  const apiEndpoint = getAPIEndpoint(net)
-  const account = getAccountFromWIFKey(fromWif)
-  // TODO: when fully working replace this with mainnet/testnet switch
-  return axios.get(apiEndpoint + '/v2/address/claims/' + account.address).then((response) => {
-    const unsignedTx = tx.create.claim(account.publicKeyEncoded, response.data)
-    const signedTx = tx.signTransaction(unsignedTx, account.privateKey)
-    const hexTx = tx.serializeTransaction(signedTx)
-    return queryRPC(net, 'sendrawtransaction', [hexTx], 2)
+export const doClaimAllGas = (net, from, signingFunction) => {
+  return new Promise((resolve, reject) => {
+    const apiEndpoint = getAPIEndpoint(net)
+    const account = signingFunction ? getAccountFromPublicKey(getPublicKeyEncoded(from)) : getAccountFromWIFKey(from)
+    // TODO: when fully working replace this with mainnet/testnet switch
+    return axios.get(apiEndpoint + '/v2/address/claims/' + account.address).then((response) => {
+      const unsignedTx = tx.create.claim(account.publicKeyEncoded, response.data)
+      if (signingFunction) {
+        signingFunction(unsignedTx, account.publicKeyEncoded).then(asyncHexTx => {
+          resolve(queryRPC(net, 'sendrawtransaction', [asyncHexTx], 2))
+        })
+      } else {
+        const signedTx = tx.signTransaction(unsignedTx, account.privateKey)
+        const hexTx = tx.serializeTransaction(signedTx)
+        resolve(queryRPC(net, 'sendrawtransaction', [hexTx], 2))
+      }
+    })
   })
 }
 
@@ -120,22 +129,31 @@ export const getStorage = (net, scriptHash, key) => {
  * Send an asset to an address
  * @param {string} net - 'MainNet' or 'TestNet'.
  * @param {string} toAddress - The destination address.
- * @param {string} fromWif - The WIF key of the originating address.
+ * @param {string} from - The WIF key of the originating address or the public key for hardware wallets.
+ * @param {function} signingFunction - async signing function for hardware wallets.
  * @param {{NEO: number, GAS: number}} amount - The amount of each asset (NEO and GAS) to send, leave empty for 0.
  * @return {Promise<Response>} RPC Response
  */
-export const doSendAsset = (net, toAddress, fromWif, assetAmounts) => {
-  const account = getAccountFromWIFKey(fromWif)
-  const toScriptHash = getScriptHashFromAddress(toAddress)
-  return getBalance(net, account.address).then((balances) => {
-    // TODO: maybe have transactions handle this construction?
-    const intents = _.map(assetAmounts, (v, k) => {
-      return { assetId: tx.ASSETS[k], value: v, scriptHash: toScriptHash }
+export const doSendAsset = (net, toAddress, from, assetAmounts, signingFunction = null) => {
+  return new Promise((resolve, reject) => {
+    const account = signingFunction ? getAccountFromPublicKey(getPublicKeyEncoded(from)) : getAccountFromWIFKey(from)
+    const toScriptHash = getScriptHashFromAddress(toAddress)
+    return getBalance(net, account.address).then((balances) => {
+      // TODO: maybe have transactions handle this construction?
+      const intents = _.map(assetAmounts, (v, k) => {
+        return { assetId: tx.ASSETS[k], value: v, scriptHash: toScriptHash }
+      })
+      const unsignedTx = tx.create.contract(account.publicKeyEncoded, balances, intents)
+      if (signingFunction) {
+        signingFunction(unsignedTx, account.publicKeyEncoded).then(asyncHexTx => {
+          resolve(queryRPC(net, 'sendrawtransaction', [asyncHexTx], 4))
+        })
+      } else {
+        const signedTx = tx.signTransaction(unsignedTx, account.privateKey)
+        const hexTx = tx.serializeTransaction(signedTx)
+        resolve(queryRPC(net, 'sendrawtransaction', [hexTx], 4))
+      }
     })
-    const unsignedTx = tx.create.contract(account.publicKeyEncoded, balances, intents)
-    const signedTx = tx.signTransaction(unsignedTx, account.privateKey)
-    const hexTx = tx.serializeTransaction(signedTx)
-    return queryRPC(net, 'sendrawtransaction', [hexTx], 4)
   })
 }
 
