@@ -91,7 +91,7 @@ export const getClaims = (net, address) => {
 export const getTransactionHistory = (net, address) => {
   const apiEndpoint = getAPIEndpoint(net)
   return axios.get(apiEndpoint + '/v1/get_address/' + address).then((response) => {
-    return response.txids
+    return response.data.txids
   })
 }
 
