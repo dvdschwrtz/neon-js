@@ -21,6 +21,20 @@ const checkProperty = (obj, ...props) => {
 }
 
 /**
+ * Get transaction history for an account
+ * @param {string} net - 'MainNet' or 'TestNet'.
+ * @param {string} address - Address to check.
+ * @return {Promise<History>} History
+ */
+export const getTransactionHistory = (net, address) => {
+  return neoscan.getTransactionHistory(net, address)
+    .then(
+      (txs) => txs,
+      () => neonDB.getTransactionHistory(net, address)
+    )
+}
+
+/**
  * Helper method to retrieve balance and URL from an endpoint. If URL is provided, it is not overriden.
  * @param {object} config - Configuration object.
  * @param {string} config.net - 'MainNet', 'TestNet' or a neon-wallet-db URL.
@@ -114,7 +128,7 @@ export const signTx = (config) => {
   } else if (config.privateKey) {
     let acct = new Account(config.privateKey)
     if (config.address !== acct.address) throw new Error('Private Key and Balance address does not match!')
-    promise = Promise.resolve(config.tx.sign(acct.privateKey))
+    promise = Promise.resolve(config.tx.sign(config.privateKey))
   } else {
     throw new Error('Needs privateKey or signingFunction to sign!')
   }

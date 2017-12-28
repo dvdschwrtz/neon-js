@@ -81,6 +81,20 @@ export const getClaims = (net, address) => {
     })
 }
 
+
+/**
+ * Get transaction history for an account
+ * @param {string} net - 'MainNet' or 'TestNet'.
+ * @param {string} address - Address to check.
+ * @return {Promise<History>} History
+ */
+export const getTransactionHistory = (net, address) => {
+  const apiEndpoint = getAPIEndpoint(net)
+  return axios.get(apiEndpoint + '/v1/get_address/' + address).then((response) => {
+    return response.txids
+  })
+}
+
 const parseUnspent = (unspentArr) => {
   return unspentArr.map((coin) => {
     return {

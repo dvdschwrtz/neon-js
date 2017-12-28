@@ -16,9 +16,16 @@ describe('Integration: API Core', function () {
       const config1 = {
         net: NEO_NETWORK.TEST,
         address: testKeys.b.address,
-        privateKey: testKeys.b.privateKey,
+        privateKey: testKeys.b.wif,
+        publicKey: null,
+        signingFunction: null,
         intents: intent1
       }
+      // const config1 = {
+      //   net: NEO_NETWORK.TEST,
+      //   address: testKeys.b.address,
+      //   privateKey: testKeys.b.privateKey,
+      // }
 
       return core.sendAsset(config1)
         .then((c) => {
