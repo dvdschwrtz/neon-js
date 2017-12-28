@@ -96,7 +96,7 @@ describe('Integration: API Core', function () {
         })
     })
 
-    it('transfers tokens', () => {
+    it('neoscan', () => {
       // This does a transferToken
       mock = setupMock()
       mock.onGet(/testnet-api.wallet/).timeout()

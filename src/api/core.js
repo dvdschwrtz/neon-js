@@ -114,7 +114,7 @@ export const signTx = (config) => {
   } else if (config.privateKey) {
     let acct = new Account(config.privateKey)
     if (config.address !== acct.address) throw new Error('Private Key and Balance address does not match!')
-    promise = Promise.resolve(config.tx.sign(config.privateKey))
+    promise = Promise.resolve(config.tx.sign(acct.privateKey))
   } else {
     throw new Error('Needs privateKey or signingFunction to sign!')
   }
@@ -166,16 +166,17 @@ export const makeIntent = (assetAmts, address) => {
  * @param {object} config - Configuration object.
  * @param {string} config.net - 'MainNet', 'TestNet' or a neon-wallet-db URL.
  * @param {string} config.address - Wallet address
- * @param {string} [privateKey] - private key to sign with. Either this or signingFunction is required.
- * @param {function} [signingFunction] - An external signing function to sign with. Either this or privateKey is required.
+ * @param {string} [privateKey] - private key to sign with. Either this or signingFunction and the publicKey are required.
+ * @param {function} [signingFunction] - An external signing function to sign with. Either this and the public key or privateKey is required.
+ * @param {string} [publicKey] - public key to sign with using the signingFunction.
  * @param {TransactionOutput[]} intents - Intents.
  * @return {object} Configuration object.
  */
 export const sendAsset = (config) => {
-  return getBalanceFrom(config, neonDB)
+  return getBalanceFrom(config, neoscan)
     .then(
     (c) => c,
-    () => getBalanceFrom(config, neoscan)
+    () => getBalanceFrom(config, neonDB)
     )
     .then((c) => createTx(c, 'contract'))
     .then((c) => signTx(c))
@@ -187,15 +188,16 @@ export const sendAsset = (config) => {
  * @param {object} config - Configuration object.
  * @param {string} config.net - 'MainNet', 'TestNet' or a neon-wallet-db URL.
  * @param {string} config.address - Wallet address
- * @param {string} [privateKey] - private key to sign with. Either this or signingFunction is required.
- * @param {function} [signingFunction] - An external signing function to sign with. Either this or privateKey is required.
+ * @param {string} [privateKey] - private key to sign with. Either this or signingFunction and the publicKey are required.
+ * @param {function} [signingFunction] - An external signing function to sign with. Either this and the public key or privateKey is required.
+ * @param {string} [publicKey] - public key to sign with using the signingFunction.
  * @return {object} Configuration object.
  */
 export const claimGas = (config) => {
-  return getClaimsFrom(config, neonDB)
+  return getClaimsFrom(config, neoscan)
     .then(
     (c) => c,
-    () => getClaimsFrom(config, neoscan)
+    () => getClaimsFrom(config, neonDB)
     )
     .then((c) => createTx(c, 'claim'))
     .then((c) => signTx(c))
@@ -243,18 +245,19 @@ const attachInvokedContract = (config) => {
  * @param {object} config - Configuration object.
  * @param {string} config.net - 'MainNet', 'TestNet' or a neon-wallet-db URL.
  * @param {string} config.address - Wallet address
- * @param {string} [privateKey] - private key to sign with. Either this or signingFunction is required.
- * @param {function} [signingFunction] - An external signing function to sign with. Either this or privateKey is required.
+ * @param {string} [privateKey] - private key to sign with. Either this or signingFunction and the publicKey are required.
+ * @param {function} [signingFunction] - An external signing function to sign with. Either this and the public key or privateKey is required.
+ * @param {string} [publicKey] - public key to sign with using the signingFunction.
  * @param {object} [intents] - Intents
  * @param {string} config.script - VM script. Must include empty args parameter even if no args are present
  * @param {number} config.gas - gasCost of VM script.
  * @return {object} Configuration object.
  */
 export const doInvoke = (config) => {
-  return getBalanceFrom(config, neonDB)
+  return getBalanceFrom(config, neoscan)
     .then(
     (c) => c,
-    () => getBalanceFrom(config, neoscan)
+    () => getBalanceFrom(config, neonDB)
     )
     .then((c) => addAttributes(c))
     .then((c) => createTx(c, 'invocation'))
