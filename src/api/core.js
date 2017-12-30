@@ -21,17 +21,13 @@ const checkProperty = (obj, ...props) => {
 }
 
 /**
- * Get transaction history for an account
+ * Get the current height of the neo blockchain
  * @param {string} net - 'MainNet' or 'TestNet'.
- * @param {string} address - Address to check.
- * @return {Promise<History>} History
+ * @return {Promise<number>} Current height.
  */
-export const getTransactionHistory = (net, address) => {
-  return neoscan.getTransactionHistory(net, address)
-    .then(
-      (txs) => txs,
-      () => neonDB.getTransactionHistory(net, address)
-    )
+export const getWalletDBHeight = (net) => {
+  return neoscan.getWalletDBHeight(net)
+    .catch(() => neonDB.getWalletDBHeight(net))
 }
 
 /**

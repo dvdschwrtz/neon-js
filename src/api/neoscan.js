@@ -90,8 +90,20 @@ export const getClaims = (net, address) => {
  */
 export const getTransactionHistory = (net, address) => {
   const apiEndpoint = getAPIEndpoint(net)
-  return axios.get(apiEndpoint + '/v1/get_address/' + address).then((response) => {
+  return axios.get(apiEndpoint + '/v1/get_address_neon/' + address).then((response) => {
     return response.data.txids
+  })
+}
+
+/**
+ * Get the current height of the neoscan DB
+ * @param {string} net - 'MainNet' or 'TestNet'.
+ * @return {Promise<number>} Current height.
+ */
+export const getWalletDBHeight = (net) => {
+  const apiEndpoint = getAPIEndpoint(net)
+  return axios.get(apiEndpoint + '/v1/get_height').then((response) => {
+    return parseInt(response.data.height)
   })
 }
 
