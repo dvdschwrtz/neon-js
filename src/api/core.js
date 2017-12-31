@@ -22,12 +22,62 @@ const checkProperty = (obj, ...props) => {
 
 /**
  * Get the current height of the neo blockchain
- * @param {string} net - 'MainNet' or 'TestNet'.
+ * @param {string} net - 'MainNet' or 'TestNet' or custom url
  * @return {Promise<number>} Current height.
  */
 export const getWalletDBHeight = (net) => {
-  return neoscan.getWalletDBHeight(net)
-    .catch(() => neonDB.getWalletDBHeight(net))
+  return neonDB.getWalletDBHeight(net)
+    .catch(() => neoscan.getWalletDBHeight(net))
+}
+
+/**
+ * Returns an appropriate RPC endpoint
+ * @param {string} net - 'MainNet' or 'TestNet' or custom url
+ * @return {Promise<string>} - URL
+ */
+export const getRPCEndpoint = (net) => {
+  return neonDB.getRPCEndpoint(net)
+    .catch(() => neoscan.getRPCEndpoint(net))
+}
+
+/**
+ * Returns an appropriate API endpoint
+ * @param {string} net - 'MainNet' or 'TestNet' or custom url
+ * @return {Promise<string>} - URL
+ */
+export const getAPIEndpoint = (net) => {
+  return neonDB.getAPIEndpoint(net)
+    .catch(() => neoscan.getAPIEndpoint(net))
+}
+
+/**
+ * Gets the claimable amounts for an address
+ * @param {string} net - 'MainNet' or 'TestNet' or custom url
+ * @return {Promise<Claim>}
+ */
+export const getClaims = (net) => {
+  return neonDB.getClaims(net)
+    .catch(() => neoscan.getClaims(net))
+}
+
+/**
+ * Get the transaction history of an address on a given network
+ * @param {string} net - 'MainNet' or 'TestNet' or custom url
+ * @return {Promise<History>} History
+ */
+export const getTransactionHistory = (net, address) => {
+  return neonDB.getTransactionHistory(net, address)
+    .catch(() => neoscan.getTransactionHistory(net, address))
+}
+
+/**
+ * Get the current balance of an address on a given network
+ * @param {string} net - 'MainNet' or 'TestNet' or custom url
+ * @return {Promise<Balance>} Balance of address
+ */
+export const getBalance = (net, address) => {
+  return neonDB.getBalance(net, address)
+    .catch(() => neoscan.getBalance(net, address))
 }
 
 /**
@@ -183,10 +233,10 @@ export const makeIntent = (assetAmts, address) => {
  * @return {object} Configuration object.
  */
 export const sendAsset = (config) => {
-  return getBalanceFrom(config, neoscan)
+  return getBalanceFrom(config, neonDB)
     .then(
     (c) => c,
-    () => getBalanceFrom(config, neonDB)
+    () => getBalanceFrom(config, neoscan)
     )
     .then((c) => createTx(c, 'contract'))
     .then((c) => signTx(c))
@@ -204,10 +254,10 @@ export const sendAsset = (config) => {
  * @return {object} Configuration object.
  */
 export const claimGas = (config) => {
-  return getClaimsFrom(config, neoscan)
+  return getClaimsFrom(config, neonDB)
     .then(
     (c) => c,
-    () => getClaimsFrom(config, neonDB)
+    () => getClaimsFrom(config, neoscan)
     )
     .then((c) => createTx(c, 'claim'))
     .then((c) => signTx(c))
@@ -264,10 +314,10 @@ const attachInvokedContract = (config) => {
  * @return {object} Configuration object.
  */
 export const doInvoke = (config) => {
-  return getBalanceFrom(config, neoscan)
+  return getBalanceFrom(config, neonDB)
     .then(
     (c) => c,
-    () => getBalanceFrom(config, neonDB)
+    () => getBalanceFrom(config, neoscan)
     )
     .then((c) => addAttributes(c))
     .then((c) => createTx(c, 'invocation'))
