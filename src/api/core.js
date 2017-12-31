@@ -55,9 +55,9 @@ export const getAPIEndpoint = (net) => {
  * @param {string} net - 'MainNet' or 'TestNet' or custom url
  * @return {Promise<Claim>}
  */
-export const getClaims = (net) => {
-  return neonDB.getClaims(net)
-    .catch(() => neoscan.getClaims(net))
+export const getClaims = (net, address) => {
+  return neonDB.getClaims(net, address)
+    .catch(() => neoscan.getClaims(net, address))
 }
 
 /**
