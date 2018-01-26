@@ -117,12 +117,12 @@ export const createTx = (config, txType) => {
     case 'claim':
     case 2:
       checkProperty(config, 'claims')
-      tx = Transaction.createClaimTx(config.address, config.claims)
+      tx = Transaction.createClaimTx(config.address, config.claims, config.override)
       break
     case 'contract':
     case 128:
       checkProperty(config, 'balance', 'intents')
-      tx = Transaction.createContractTx(config.balance, config.intents)
+      tx = Transaction.createContractTx(config.balance, config.intents, config.override)
       break
     case 'invocation':
     case 209:
